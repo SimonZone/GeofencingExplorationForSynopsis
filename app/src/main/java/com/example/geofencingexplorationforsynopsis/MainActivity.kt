@@ -1,36 +1,23 @@
 package com.example.geofencingexplorationforsynopsis
 
 import android.os.Bundle
-import com.google.android.material.snackbar.Snackbar
+import android.view.Menu
+import android.view.MenuItem
 import androidx.appcompat.app.AppCompatActivity
 import androidx.navigation.findNavController
 import androidx.navigation.ui.AppBarConfiguration
 import androidx.navigation.ui.navigateUp
 import androidx.navigation.ui.setupActionBarWithNavController
-import android.view.Menu
-import android.view.MenuItem
-import androidx.activity.result.contract.ActivityResultContracts
-import androidx.navigation.fragment.findNavController
 import com.example.geofencingexplorationforsynopsis.databinding.ActivityMainBinding
-import com.google.android.gms.common.internal.Constants
-import com.google.android.gms.location.FusedLocationProviderClient
-import com.google.android.gms.location.Geofence
-import com.google.android.gms.location.GeofencingClient
-import com.google.android.gms.location.LocationServices
+import com.google.android.material.snackbar.Snackbar
 
 class MainActivity : AppCompatActivity() {
 
     private lateinit var appBarConfiguration: AppBarConfiguration
     private lateinit var binding: ActivityMainBinding
-    private lateinit var geofencingClient: GeofencingClient
-    private lateinit var geofenceHelper: GeofenceHelper
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-
-        geofencingClient = LocationServices.getGeofencingClient(this)
-        geofenceHelper = geofenceHelper
-
 
         binding = ActivityMainBinding.inflate(layoutInflater)
         setContentView(binding.root)
