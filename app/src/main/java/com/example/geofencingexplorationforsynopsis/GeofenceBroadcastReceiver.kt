@@ -24,8 +24,8 @@ class GeofenceBroadcastReceiver : BroadcastReceiver() {
             val geofenceTransition = geofencingEvent.geofenceTransition
             val geofence: Geofence? = geofencingEvent.triggeringGeofences?.firstOrNull()
             when (geofenceTransition) {
-                Geofence.GEOFENCE_TRANSITION_ENTER -> showToast(context,"Entered geofence at ${geofence?.requestId}: GEOFENCE_TRANSITION_ENTER",TAG)
-                Geofence.GEOFENCE_TRANSITION_EXIT -> showToast(context,"Exited geofence at ${geofence?.requestId}: GEOFENCE_TRANSITION_EXIT",TAG)
+                Geofence.GEOFENCE_TRANSITION_ENTER -> showToast(context,"Entered geofence at ${geofence?.requestId}",TAG)
+                Geofence.GEOFENCE_TRANSITION_EXIT -> showToast(context,"Exited geofence at ${geofence?.requestId}",TAG)
                 else -> showToast(context,"Unknown geofence transition",TAG)
             }
         } else {

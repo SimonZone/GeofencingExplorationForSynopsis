@@ -4,6 +4,7 @@ import android.Manifest
 import android.annotation.SuppressLint
 import android.app.PendingIntent
 import android.content.Intent
+import android.content.pm.PackageManager
 import android.location.Geocoder
 import android.location.Location
 import android.os.Bundle
@@ -12,6 +13,9 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.appcompat.app.AlertDialog
+import androidx.core.app.ActivityCompat
+import androidx.core.content.ContextCompat
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.activityViewModels
 import androidx.navigation.fragment.findNavController
@@ -71,9 +75,10 @@ class FirstFragment : Fragment() {
             registerForActivityResult(ActivityResultContracts.RequestMultiplePermissions())
             { permissions ->
                 when {
-                    permissions.getOrDefault(Manifest.permission.ACCESS_BACKGROUND_LOCATION, false) -> {
-                        // Background location access granted.
-                        Log.i(TAG, "Background location access granted")
+                    permissions.getOrDefault(Manifest.permission.ACCESS_FINE_LOCATION, false)
+                    || permissions.getOrDefault(Manifest.permission.ACCESS_COARSE_LOCATION, false) -> {
+                        // Precise or Approximate location access granted.
+                        Log.i(TAG, "Precise or Approximate location access granted")
                         geofencingClient.addGeofences(getGeofencingRequest(), getGeofencePendingIntent())
                             .addOnSuccessListener {
                                 Log.i(TAG, "added geofences")
@@ -84,17 +89,22 @@ class FirstFragment : Fragment() {
                                 Log.e(TAG, "Error adding geofences", e)
                             }
                     }
-                    permissions.getOrDefault(Manifest.permission.ACCESS_FINE_LOCATION, false) -> {
-                        // Precise location access granted.
-                        Log.i(TAG, "Precise location access granted")
-                    }
-                    permissions.getOrDefault(Manifest.permission.ACCESS_COARSE_LOCATION, false) -> {
-                        // Only approximate location access granted.
-                        Log.i(TAG, "Approximate location access granted")
-                    }
                     else -> {
                         // No location access granted.
                         Log.i(TAG, "No location access granted")
+                        if (ActivityCompat.shouldShowRequestPermissionRationale(
+                                requireActivity(), Manifest.permission.ACCESS_FINE_LOCATION)
+                        ) {
+                            // Explains why the permission is needed to the user
+                            showInContextUI()
+                        } else {
+                            // Requests the permission
+                            ActivityCompat.requestPermissions(
+                                requireActivity(),
+                                arrayOf(Manifest.permission.ACCESS_FINE_LOCATION),
+                                1
+                            )
+                        }
                     }
                 }
             }
@@ -105,7 +115,6 @@ class FirstFragment : Fragment() {
                 Manifest.permission.ACCESS_BACKGROUND_LOCATION
             )
         )
-
         binding.buttonMap.setOnClickListener {
             val action = FirstFragmentDirections.actionFirstFragmentToMapsFragment()
             findNavController().navigate(action)
@@ -180,5 +189,22 @@ class FirstFragment : Fragment() {
             .setExpirationDuration(expirationTimeInMillis)
             .setTransitionTypes(GEOFENCE_TRANSITION_ENTER or GEOFENCE_TRANSITION_EXIT)
             .build()
+    }
+
+    private fun showInContextUI() {
+        val dialogBuilder = AlertDialog.Builder(requireContext())
+        dialogBuilder.setTitle("Location Permission Required")
+        dialogBuilder.setMessage("To provide you with location-based services, we need access to your device's precise location. " +
+                "Please grant the location permission to enable this feature.")
+
+        dialogBuilder.setNegativeButton("Cancel") { dialog, _ ->
+            dialog.dismiss()
+        }
+        dialogBuilder.setPositiveButton("Grant Permission") { dialog, _ ->
+            dialog.dismiss()
+        }
+
+        val dialog = dialogBuilder.create()
+        dialog.show()
     }
 }
