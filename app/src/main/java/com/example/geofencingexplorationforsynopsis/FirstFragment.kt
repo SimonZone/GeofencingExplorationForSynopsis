@@ -98,7 +98,7 @@ class FirstFragment : Fragment() {
                             // Explains why the permission is needed to the user
                             showInContextUI()
                         } else {
-                            // Requests the permission
+                            // Requests permission
                             ActivityCompat.requestPermissions(
                                 requireActivity(),
                                 arrayOf(Manifest.permission.ACCESS_FINE_LOCATION),

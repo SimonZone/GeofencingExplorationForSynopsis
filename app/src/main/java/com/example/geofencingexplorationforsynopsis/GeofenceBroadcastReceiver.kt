@@ -13,7 +13,11 @@ class GeofenceBroadcastReceiver : BroadcastReceiver() {
     private val TAG: String = "GeofenceBroadcastReceiver"
     override fun onReceive(context: Context?, intent: Intent?) {
         Log.i(TAG,"Triggered geofence")
-        val geofencingEvent = GeofencingEvent.fromIntent(intent!!)
+        if (intent == null) {
+            Log.e(TAG,"intent was null")
+            return
+        }
+        val geofencingEvent = GeofencingEvent.fromIntent(intent)
         if (geofencingEvent?.hasError() == true) {
             val errorMessage = GeofenceStatusCodes
                 .getStatusCodeString(geofencingEvent.errorCode)
