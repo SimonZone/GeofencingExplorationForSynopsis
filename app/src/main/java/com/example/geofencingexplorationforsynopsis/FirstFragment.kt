@@ -4,8 +4,6 @@ import android.Manifest
 import android.annotation.SuppressLint
 import android.app.PendingIntent
 import android.content.Intent
-import android.content.pm.PackageManager
-import android.location.Geocoder
 import android.location.Location
 import android.os.Bundle
 import android.util.Log
@@ -14,8 +12,6 @@ import android.view.View
 import android.view.ViewGroup
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AlertDialog
-import androidx.core.app.ActivityCompat
-import androidx.core.content.ContextCompat
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.activityViewModels
 import androidx.navigation.fragment.findNavController
@@ -29,7 +25,6 @@ import com.google.android.gms.location.GeofencingRequest
 import com.google.android.gms.location.LocationServices
 import com.google.android.gms.location.Priority
 import com.google.android.gms.maps.model.LatLng
-import java.util.Locale
 
 
 class FirstFragment : Fragment() {
@@ -76,9 +71,10 @@ class FirstFragment : Fragment() {
             { permissions ->
                 when {
                     permissions.getOrDefault(Manifest.permission.ACCESS_FINE_LOCATION, false)
-                    || permissions.getOrDefault(Manifest.permission.ACCESS_COARSE_LOCATION, false) -> {
+                    || permissions.getOrDefault(Manifest.permission.ACCESS_COARSE_LOCATION, false)
+                    || permissions.getOrDefault(Manifest.permission.ACCESS_BACKGROUND_LOCATION, false) -> {
                         // Precise or Approximate location access granted.
-                        Log.i(TAG, "Precise or Approximate location access granted")
+                        Log.i(TAG, "Location access granted")
                         geofencingClient.addGeofences(getGeofencingRequest(), getGeofencePendingIntent())
                             .addOnSuccessListener {
                                 Log.i(TAG, "added geofences")
@@ -92,19 +88,7 @@ class FirstFragment : Fragment() {
                     else -> {
                         // No location access granted.
                         Log.i(TAG, "No location access granted")
-                        if (ActivityCompat.shouldShowRequestPermissionRationale(
-                                requireActivity(), Manifest.permission.ACCESS_FINE_LOCATION)
-                        ) {
-                            // Explains why the permission is needed to the user
-                            showInContextUI()
-                        } else {
-                            // Requests permission
-                            ActivityCompat.requestPermissions(
-                                requireActivity(),
-                                arrayOf(Manifest.permission.ACCESS_FINE_LOCATION),
-                                1
-                            )
-                        }
+                        showInContextUI()
                     }
                 }
             }
@@ -112,7 +96,8 @@ class FirstFragment : Fragment() {
             arrayOf(
                 Manifest.permission.ACCESS_FINE_LOCATION,
                 Manifest.permission.ACCESS_COARSE_LOCATION,
-                Manifest.permission.ACCESS_BACKGROUND_LOCATION
+                Manifest.permission.ACCESS_BACKGROUND_LOCATION,
+                Manifest.permission.POST_NOTIFICATIONS
             )
         )
         binding.buttonMap.setOnClickListener {
@@ -127,7 +112,6 @@ class FirstFragment : Fragment() {
 
     @SuppressLint("MissingPermission")
     private fun getCurrentLocation(){
-        val geocoder = Geocoder(requireActivity(), Locale.getDefault())
         fusedLocationClient.getCurrentLocation(Priority.PRIORITY_HIGH_ACCURACY, null)
             .addOnSuccessListener(requireActivity()) { location ->
                 location?.let {
@@ -136,20 +120,13 @@ class FirstFragment : Fragment() {
                     val accuracy = it.accuracy
                     geofenceViewModel.latLng.value = LatLng(latitude, longitude)
                     geofenceViewModel.geofenceList.value = geofenceList
-                    Log.d(TAG, "Current Location is: Latitude: $latitude, Longitude: $longitude, Accuracy: $accuracy meters")
-                    try {
-                        val addresses = geocoder.getFromLocation(latitude, longitude, 1)
-                        if (addresses!!.isNotEmpty()) {
-                            binding.buttonMap.isEnabled = true
-                            val address = addresses[0]
-                            val addressString = address.getAddressLine(0) ?: "No address found"
-                            Log.d(TAG, "Address: $addressString")
-                        } else {
-                            Log.e(TAG, "No address found for the given coordinates")
-                        }
-                    } catch (e: Exception) {
-                        Log.e(TAG, "Error getting address", e)
+                    if (geofenceViewModel.latLng.value == null) {
+                        Log.d(
+                            TAG,
+                            "Current Location is: Latitude: $latitude, Longitude: $longitude, Accuracy: $accuracy meters"
+                        )
                     }
+                    binding.buttonMap.isEnabled = true
                 } ?: run {
                     Log.e(TAG, "Location is null")
                 }
@@ -160,7 +137,6 @@ class FirstFragment : Fragment() {
     }
     private fun getGeofencingRequest(): GeofencingRequest {
         return GeofencingRequest.Builder().apply {
-            setInitialTrigger(GeofencingRequest.INITIAL_TRIGGER_ENTER)
             addGeofences(geofenceList.values.toList())
         }.build()
     }
@@ -195,12 +171,9 @@ class FirstFragment : Fragment() {
         val dialogBuilder = AlertDialog.Builder(requireContext())
         dialogBuilder.setTitle("Location Permission Required")
         dialogBuilder.setMessage("To provide you with location-based services, we need access to your device's precise location. " +
-                "Please grant the location permission to enable this feature.")
+                "Please grant the location permission in the apps settings to enable this feature.")
 
-        dialogBuilder.setNegativeButton("Cancel") { dialog, _ ->
-            dialog.dismiss()
-        }
-        dialogBuilder.setPositiveButton("Grant Permission") { dialog, _ ->
+        dialogBuilder.setNeutralButton("Ok") { dialog, _ ->
             dialog.dismiss()
         }
 
